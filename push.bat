@@ -1,3 +1,3 @@
 git add .
-git commit -m "feat: add landing page"
+git commit -m "fix: landing page build"
 git push

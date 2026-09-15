@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -10,18 +10,18 @@ export default function Home() {
           <span className="block text-xl text-slate-500 mt-2 font-sans">Wedding Registry</span>
         </h1>
 
-        <div className="space-y-4">
-          <Button asChild className="w-full text-lg h-12" variant="default">
-            <Link href="/event/test-wedding">View Guest Form (ភ្ញៀវ)</Link>
-          </Button>
+        <div className="space-y-4 flex flex-col">
+          <Link href="/event/test-wedding" className={buttonVariants({ variant: "default", className: "w-full text-lg h-12" })}>
+            View Guest Form (ភ្ញៀវ)
+          </Link>
           
-          <Button asChild className="w-full text-lg h-12" variant="outline">
-            <Link href="/host">Host Dashboard (ម្ចាស់ដើមការ)</Link>
-          </Button>
+          <Link href="/host" className={buttonVariants({ variant: "outline", className: "w-full text-lg h-12" })}>
+            Host Dashboard (ម្ចាស់ដើមការ)
+          </Link>
           
-          <Button asChild className="w-full text-lg h-12" variant="secondary">
-            <Link href="/admin">Admin Dashboard</Link>
-          </Button>
+          <Link href="/admin" className={buttonVariants({ variant: "secondary", className: "w-full text-lg h-12" })}>
+            Admin Dashboard
+          </Link>
         </div>
       </div>
     </main>
