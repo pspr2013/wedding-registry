@@ -105,8 +105,8 @@ export default function AdminDashboard() {
                     </>
                   )}
                   {gift.slip_url && (
-                    <Button size="sm" variant="outline" asChild>
-                      <a href={gift.slip_url} target="_blank" rel="noreferrer">View Slip</a>
+                    <Button size="sm" variant="outline" onClick={() => window.open(gift.slip_url, '_blank')}>
+                      View Slip
                     </Button>
                   )}
                 </div>
