@@ -4,18 +4,37 @@ import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { supabase } from "@/lib/supabase/client";
 import { db, Gift } from "@/lib/db/dexie";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function HostDashboard() {
   const [loading, setLoading] = useState(true);
   const [online, setOnline] = useState(true);
   
+  // Auth state
+  const [session, setSession] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  
   // Observe local offline cache automatically
   const cachedGifts = useLiveQuery(() => db.gifts.toArray());
 
   useEffect(() => {
-    fetchApprovedGifts();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchApprovedGifts();
+      else setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchApprovedGifts();
+    });
     
     // Setup online/offline listeners
     const handleOnline = () => setOnline(true);
@@ -24,10 +43,24 @@ export default function HostDashboard() {
     window.addEventListener('offline', handleOffline);
     
     return () => {
+      subscription.unsubscribe();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setAuthLoading(false);
+    if (error) {
+      alert("Login Error: " + error.message);
+    }
+  };
 
   const fetchApprovedGifts = async () => {
     if (!navigator.onLine) {
@@ -81,6 +114,47 @@ export default function HostDashboard() {
     link.remove();
   };
 
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-rose-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg border-rose-200">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-rose-800">Host Login</CardTitle>
+            <CardDescription>Sign in to view the wedding gifts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="host@wedding.com" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full bg-rose-600 hover:bg-rose-700" disabled={authLoading}>
+                {authLoading ? "Signing in..." : "Login"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading && gifts.length === 0) return <div className="p-8">កំពុងទាញយកទិន្នន័យ (Loading)...</div>;
 
   return (
@@ -90,9 +164,13 @@ export default function HostDashboard() {
           <h1 className="text-3xl font-heading font-bold text-rose-800">Host Dashboard</h1>
           {!online && <p className="text-red-500 font-semibold">Offline Mode - Viewing Cached Data</p>}
         </div>
-        <Button onClick={exportReport} variant="default" className="bg-rose-600 hover:bg-rose-700 text-white">
-          Export Report (CSV)
-        </Button>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">{session.user.email}</span>
+          <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>Sign Out</Button>
+          <Button onClick={exportReport} variant="default" className="bg-rose-600 hover:bg-rose-700 text-white">
+            Export Report (CSV)
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

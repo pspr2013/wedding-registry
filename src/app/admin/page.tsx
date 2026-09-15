@@ -3,16 +3,50 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { db, Gift } from "@/lib/db/dexie";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminDashboard() {
   const [gifts, setGifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Auth state
+  const [session, setSession] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
-    fetchGifts();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchGifts();
+      else setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchGifts();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setAuthLoading(false);
+    if (error) {
+      alert("Login Error: " + error.message);
+    }
+  };
 
   const fetchGifts = async () => {
     setLoading(true);
@@ -31,8 +65,9 @@ export default function AdminDashboard() {
       if (approvedGifts.length > 0) {
         await db.gifts.bulkPut(approvedGifts);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching gifts:", error);
+      if (error.message) alert(error.message);
     } finally {
       setLoading(false);
     }
@@ -61,15 +96,60 @@ export default function AdminDashboard() {
     downloadAnchorNode.remove();
   };
 
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
+            <CardDescription>Sign in to access the admin dashboard</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@wedding.com" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={authLoading}>
+                {authLoading ? "Signing in..." : "Login"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) return <div className="p-8">កំពុងទាញយកទិន្នន័យ (Loading)...</div>;
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-heading font-bold">Admin Dashboard</h1>
-        <Button onClick={exportBackup} variant="outline">
-          Export Local Backup (JSON)
-        </Button>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">{session.user.email}</span>
+          <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>Sign Out</Button>
+          <Button onClick={exportBackup} variant="default">
+            Export Local Backup (JSON)
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
