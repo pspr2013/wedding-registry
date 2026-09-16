@@ -89,6 +89,10 @@ export default function AdminDashboard() {
            .filter(g => g.status === 'approved' || g.id === id)
            .reduce((acc, curr) => acc + (Number(curr.amount_usd) || 0), 0);
 
+        const totalKhr = gifts
+           .filter(g => g.status === 'approved' || g.id === id)
+           .reduce((acc, curr) => acc + (Number(curr.amount_khr) || 0), 0);
+
         if (giftToApprove) {
           console.log("Triggering telegram notification for id:", id);
           alert("Approving gift and sending telegram notification!");
@@ -101,7 +105,8 @@ export default function AdminDashboard() {
               guest_name: giftToApprove.guest_name,
               amount_usd: giftToApprove.amount_usd,
               amount_khr: giftToApprove.amount_khr,
-              totalUsd: totalUsd
+              totalUsd: totalUsd,
+              totalKhr: totalKhr
             })
           }).then(res => {
               console.log("Fetch response:", res.status);
@@ -186,14 +191,19 @@ export default function AdminDashboard() {
                .filter(g => g.status === 'approved')
                .reduce((acc, curr) => acc + (Number(curr.amount_usd) || 0), 0);
                
+            const totalKhr = gifts
+               .filter(g => g.status === 'approved')
+               .reduce((acc, curr) => acc + (Number(curr.amount_khr) || 0), 0);
+               
             fetch('/api/notify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
                 guest_name: gifts[0]?.guest_name || "Test Guest",
-                amount_usd: gifts[0]?.amount_usd || 100,
-                amount_khr: gifts[0]?.amount_khr || 400000,
-                totalUsd: totalUsd
+                amount_usd: gifts[0]?.amount_usd ?? 100,
+                amount_khr: gifts[0]?.amount_khr ?? 400000,
+                totalUsd: totalUsd,
+                totalKhr: totalKhr
               })
             }).then(res => {
               if (res.ok) alert("Telegram message sent successfully!");

@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase/client';
 export async function POST(request: Request) {
   console.log("--> API /api/notify called!");
   try {
-    const { guest_name, amount_usd, amount_khr, totalUsd } = await request.json();
+    const { guest_name, amount_usd, amount_khr, totalUsd, totalKhr } = await request.json();
     console.log("--> Received request to notify for gift:", guest_name);
 
     if (!guest_name) {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const message = `🎉 *New Gift Approved!*\n\n` +
                     `*Guest:* ${guest_name}\n` +
                     `*Amount:* $${amount_usd} / ៛${amount_khr}\n\n` +
-                    `*Total Collected:* $${totalUsd}`;
+                    `*Total Collected:* $${totalUsd} / ៛${totalKhr}`;
 
     // Send to Telegram
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
