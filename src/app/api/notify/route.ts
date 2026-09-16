@@ -21,10 +21,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Telegram credentials not configured' }, { status: 500 });
     }
 
-    const message = `🎉 *New Gift Approved!*\n\n` +
-                    `*Guest:* ${guest_name}\n` +
-                    `*Amount:* $${amount_usd} / ៛${amount_khr}\n\n` +
-                    `*Total Collected:* $${totalUsd} / ៛${totalKhr}`;
+    const message = `🎉 <b>New Gift Approved!</b>\n\n` +
+                    `<b>Guest:</b> ${guest_name}\n` +
+                    `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
+                    `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
 
     // Send to Telegram
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
       }),
     });
 
