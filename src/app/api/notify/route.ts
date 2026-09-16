@@ -26,23 +26,33 @@ export async function POST(request: Request) {
                     `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
                     `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
 
-    // Send to Telegram
-    const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML',
-      }),
-    });
+    // Send to all Telegram chat IDs (comma separated)
+    const chatIds = chatId.split(',').map(id => id.trim()).filter(id => id);
+    
+    const sendPromises = chatIds.map(id => 
+      fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: id,
+          text: message,
+          parse_mode: 'HTML',
+        }),
+      })
+    );
 
-    if (!telegramResponse.ok) {
-        const errorData = await telegramResponse.text();
-        console.error("Telegram API Error:", errorData);
-        return NextResponse.json({ error: 'Failed to send Telegram message' }, { status: 500 });
+    const telegramResponses = await Promise.all(sendPromises);
+    
+    // Check if any of the requests failed
+    const failedResponses = telegramResponses.filter(res => !res.ok);
+    if (failedResponses.length > 0) {
+        for (const failedRes of failedResponses) {
+          const errorData = await failedRes.text();
+          console.error("Telegram API Error:", errorData);
+        }
+        return NextResponse.json({ error: 'Failed to send Telegram message to one or more chats' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
