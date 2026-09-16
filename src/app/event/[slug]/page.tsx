@@ -43,6 +43,12 @@ export default function GuestForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!usd && !khr) {
+      alert("Please enter at least one amount (USD or KHR).");
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -51,7 +57,7 @@ export default function GuestForm() {
       // 1. Upload Slip if provided
       if (file) {
         const fileExt = file.name.split(".").pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${fileName}`;
         
         const { error: uploadError, data } = await supabase.storage
