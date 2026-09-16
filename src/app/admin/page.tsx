@@ -134,6 +134,28 @@ export default function AdminDashboard() {
     downloadAnchorNode.remove();
   };
 
+  const exportCSV = () => {
+    const headers = ["Guest Name", "USD Amount", "KHR Amount", "Status", "Date Submitted"];
+    const csvContent = [
+      headers.join(","),
+      ...gifts.map(g => [
+        `"${(g.guest_name || "").replace(/"/g, '""')}"`,
+        g.amount_usd || 0,
+        g.amount_khr || 0,
+        g.status,
+        `"${new Date(g.created_at).toLocaleString()}"`
+      ].join(","))
+    ].join("\n");
+
+    const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "wedding_gifts_export.csv");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
   if (!session) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -212,7 +234,10 @@ export default function AdminDashboard() {
           }} variant="secondary">
             Test Telegram Alert
           </Button>
-          <Button onClick={exportBackup} variant="default">
+          <Button onClick={exportCSV} variant="default" className="bg-green-600 hover:bg-green-700 text-white">
+            Export to CSV
+          </Button>
+          <Button onClick={exportBackup} variant="outline">
             Export Local Backup (JSON)
           </Button>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,30 @@ export default function GuestForm() {
   const [usd, setUsd] = useState("");
   const [khr, setKhr] = useState("");
   const [file, setFile] = useState<File | null>(null);
+
+  // Progress Bar State
+  const [totalCollected, setTotalCollected] = useState(0);
+  const GOAL_USD = 10000;
+
+  useEffect(() => {
+    const fetchTotals = async () => {
+      const { data, error } = await supabase
+        .from("gifts")
+        .select("amount_usd, amount_khr, status")
+        .eq("status", "approved");
+
+      if (data && !error) {
+        let total = 0;
+        data.forEach(gift => {
+          total += (gift.amount_usd || 0);
+          // Note: KHR is ignored for the simple progress bar goal, or we could convert it.
+          // Let's just sum USD for now to keep it simple.
+        });
+        setTotalCollected(total);
+      }
+    };
+    fetchTotals();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +81,24 @@ export default function GuestForm() {
 
       if (insertError) throw insertError;
 
+      // Trigger Telegram Notification for New Submission
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            guest_name: name,
+            amount_usd: usd ? parseFloat(usd) : 0,
+            amount_khr: khr ? parseFloat(khr) : 0,
+            type: "submitted"
+          }),
+        });
+      } catch (notifyError) {
+        console.error("Failed to send telegram notification:", notifyError);
+      }
+
       alert(`ជូនពរអ្នកទទួលបានជោគជ័យ! ចំណងដៃត្រូវបានកត់ត្រាទុកដោយជោគជ័យ។ (Gift successfully recorded)`);
       
       // Reset form
@@ -85,6 +127,19 @@ export default function GuestForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-6 space-y-2">
+            <div className="flex justify-between text-sm font-medium">
+              <span className="text-rose-700">Progress</span>
+              <span className="text-rose-700">${totalCollected.toLocaleString()} / ${GOAL_USD.toLocaleString()}</span>
+            </div>
+            <div className="w-full bg-rose-100 rounded-full h-2.5">
+              <div 
+                className="bg-rose-500 h-2.5 rounded-full" 
+                style={{ width: `${Math.min((totalCollected / GOAL_USD) * 100, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">ឈ្មោះភ្ញៀវ (Guest Name) *</Label>

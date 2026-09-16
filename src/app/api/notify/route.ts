@@ -4,8 +4,8 @@ import { supabase } from '@/lib/supabase/client';
 export async function POST(request: Request) {
   console.log("--> API /api/notify called!");
   try {
-    const { guest_name, amount_usd, amount_khr, totalUsd, totalKhr } = await request.json();
-    console.log("--> Received request to notify for gift:", guest_name);
+    const { guest_name, amount_usd, amount_khr, totalUsd, totalKhr, type } = await request.json();
+    console.log(`--> Received request to notify for gift: ${guest_name}, type: ${type || 'approved'}`);
 
     if (!guest_name) {
       console.log("--> Missing gift details, returning 400");
@@ -21,10 +21,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Telegram credentials not configured' }, { status: 500 });
     }
 
-    const message = `🎉 <b>New Gift Approved!</b>\n\n` +
-                    `<b>Guest:</b> ${guest_name}\n` +
-                    `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
-                    `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
+    let message = "";
+    if (type === "submitted") {
+      message = `🛎 <b>New Gift Submitted (Pending Approval)</b>\n\n` +
+                `<b>Guest:</b> ${guest_name}\n` +
+                `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}`;
+    } else {
+      message = `🎉 <b>New Gift Approved!</b>\n\n` +
+                `<b>Guest:</b> ${guest_name}\n` +
+                `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
+                `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
+    }
 
     // Send to all Telegram chat IDs (comma separated)
     const chatIds = chatId.split(',').map(id => id.trim()).filter(id => id);
