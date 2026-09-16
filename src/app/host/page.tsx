@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 export default function HostDashboard() {
   const [loading, setLoading] = useState(true);
   const [online, setOnline] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   
   // Auth state
   const [session, setSession] = useState<any>(null);
@@ -25,7 +27,7 @@ export default function HostDashboard() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchApprovedGifts();
+      if (session) fetchGifts();
       else setLoading(false);
     });
 
@@ -33,7 +35,7 @@ export default function HostDashboard() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchApprovedGifts();
+      if (session) fetchGifts();
     });
     
     // Setup online/offline listeners
@@ -62,7 +64,7 @@ export default function HostDashboard() {
     }
   };
 
-  const fetchApprovedGifts = async () => {
+  const fetchGifts = async () => {
     if (!navigator.onLine) {
       setOnline(false);
       setLoading(false);
@@ -74,7 +76,6 @@ export default function HostDashboard() {
       const { data, error } = await supabase
         .from("gifts")
         .select("*")
-        .eq("status", "approved")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -91,7 +92,13 @@ export default function HostDashboard() {
     }
   };
 
-  const gifts = cachedGifts || [];
+  const allGifts = cachedGifts || [];
+  
+  const gifts = allGifts.filter(gift => {
+    const matchesSearch = gift.guest_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || gift.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
   
   const totalUSD = gifts.reduce((sum, gift) => sum + (gift.amount_usd || 0), 0);
   const totalKHR = gifts.reduce((sum, gift) => sum + (gift.amount_khr || 0), 0);
@@ -193,12 +200,33 @@ export default function HostDashboard() {
         </Card>
       </div>
 
-      <h2 className="text-2xl font-heading font-bold mt-8 mb-4">បញ្ជីចំណងដៃ (Approved Gifts)</h2>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mt-8 mb-4 gap-4">
+        <h2 className="text-2xl font-heading font-bold">បញ្ជីចំណងដៃ (Gifts)</h2>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Input
+            placeholder="ស្វែងរកឈ្មោះ (Search name)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-64"
+          />
+          <select
+            className="flex h-10 w-full sm:w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">ទាំងអស់ (All)</option>
+            <option value="pending">រង់ចាំ (Pending)</option>
+            <option value="approved">អនុម័ត (Approved)</option>
+            <option value="rejected">បដិសេធ (Rejected)</option>
+          </select>
+        </div>
+      </div>
       <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="p-4 font-medium">ឈ្មោះ (Guest Name)</th>
+              <th className="p-4 font-medium">ស្ថានភាព (Status)</th>
               <th className="p-4 font-medium">USD</th>
               <th className="p-4 font-medium">KHR</th>
               <th className="p-4 font-medium">កាលបរិច្ឆេទ (Date)</th>
@@ -208,6 +236,15 @@ export default function HostDashboard() {
             {gifts.map(gift => (
               <tr key={gift.id} className="border-b last:border-0 hover:bg-gray-50">
                 <td className="p-4 font-medium">{gift.guest_name}</td>
+                <td className="p-4">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    gift.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    gift.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {gift.status}
+                  </span>
+                </td>
                 <td className="p-4">${gift.amount_usd}</td>
                 <td className="p-4">៛{gift.amount_khr.toLocaleString()}</td>
                 <td className="p-4 text-muted-foreground">{new Date(gift.created_at).toLocaleString()}</td>
@@ -215,7 +252,7 @@ export default function HostDashboard() {
             ))}
             {gifts.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-muted-foreground">មិនទាន់មានទិន្នន័យ (No data yet)</td>
+                <td colSpan={5} className="p-4 text-center text-muted-foreground">មិនទាន់មានទិន្នន័យ (No data yet)</td>
               </tr>
             )}
           </tbody>
