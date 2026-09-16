@@ -80,6 +80,26 @@ export default function AdminDashboard() {
         .update({ status })
         .eq("id", id);
       if (error) throw error;
+      
+      // Trigger telegram notification on approval
+      if (status === 'approved') {
+        console.log("Triggering telegram notification for id:", id);
+        alert("Approving gift and sending telegram notification!");
+        fetch('/api/notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id })
+        }).then(res => {
+            console.log("Fetch response:", res.status);
+            if (!res.ok) alert("Failed to notify telegram. Check console.");
+        }).catch(err => {
+            console.error("Failed to notify Telegram:", err);
+            alert("Network error trying to notify telegram.");
+        });
+      }
+
       await fetchGifts();
     } catch (error) {
       console.error("Error updating status:", error);
@@ -146,6 +166,19 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">{session.user.email}</span>
           <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>Sign Out</Button>
+          <Button onClick={() => {
+            alert("Testing Telegram...");
+            fetch('/api/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: gifts[0]?.id || "dummy-id" })
+            }).then(res => {
+              if (res.ok) alert("Telegram message sent successfully!");
+              else alert("Failed to send. Error code: " + res.status);
+            }).catch(e => alert("Network error: " + e.message));
+          }} variant="secondary">
+            Test Telegram Alert
+          </Button>
           <Button onClick={exportBackup} variant="default">
             Export Local Backup (JSON)
           </Button>
