@@ -12,6 +12,11 @@ export default function AdminDashboard() {
   const [gifts, setGifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editUsd, setEditUsd] = useState("");
+  const [editKhr, setEditKhr] = useState("");
+  
   // Auth state
   const [session, setSession] = useState<any>(null);
   const [email, setEmail] = useState("");
@@ -121,6 +126,24 @@ export default function AdminDashboard() {
       await fetchGifts();
     } catch (error) {
       console.error("Error updating status:", error);
+    }
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("gifts")
+        .update({ 
+          amount_usd: parseFloat(editUsd) || 0,
+          amount_khr: parseFloat(editKhr) || 0
+        })
+        .eq("id", id);
+      if (error) throw error;
+      setEditingId(null);
+      await fetchGifts();
+    } catch (error) {
+      console.error("Error updating gift:", error);
+      alert("Failed to update gift");
     }
   };
 
@@ -256,8 +279,23 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-                <div><strong>USD:</strong> ${gift.amount_usd}</div>
-                <div><strong>KHR:</strong> ៛{gift.amount_khr}</div>
+                {editingId === gift.id ? (
+                  <>
+                    <div className="space-y-1">
+                      <Label>USD Amount</Label>
+                      <Input type="number" value={editUsd} onChange={(e) => setEditUsd(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>KHR Amount</Label>
+                      <Input type="number" value={editKhr} onChange={(e) => setEditKhr(e.target.value)} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div><strong>USD:</strong> ${gift.amount_usd}</div>
+                    <div><strong>KHR:</strong> ៛{gift.amount_khr}</div>
+                  </>
+                )}
                 <div>
                   <strong>Status:</strong>{" "}
                   <span className={`px-2 py-1 rounded text-sm ${
@@ -269,16 +307,30 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <div className="flex space-x-2 justify-end">
-                  {gift.status === 'pending' && (
+                  {editingId === gift.id ? (
                     <>
-                      <Button size="sm" onClick={() => handleUpdateStatus(gift.id, 'approved')}>Approve</Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleUpdateStatus(gift.id, 'rejected')}>Reject</Button>
+                      <Button size="sm" onClick={() => handleSaveEdit(gift.id)}>Save</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
                     </>
-                  )}
-                  {gift.slip_url && (
-                    <Button size="sm" variant="outline" onClick={() => window.open(gift.slip_url, '_blank')}>
-                      View Slip
-                    </Button>
+                  ) : (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => {
+                        setEditingId(gift.id);
+                        setEditUsd(gift.amount_usd?.toString() || "0");
+                        setEditKhr(gift.amount_khr?.toString() || "0");
+                      }}>Edit</Button>
+                      {gift.status === 'pending' && (
+                        <>
+                          <Button size="sm" onClick={() => handleUpdateStatus(gift.id, 'approved')}>Approve</Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleUpdateStatus(gift.id, 'rejected')}>Reject</Button>
+                        </>
+                      )}
+                      {gift.slip_url && (
+                        <Button size="sm" variant="outline" onClick={() => window.open(gift.slip_url, '_blank')}>
+                          View Slip
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
