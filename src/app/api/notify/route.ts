@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase/client';
 export async function POST(request: Request) {
   console.log("--> API /api/notify called!");
   try {
-    const { guest_name, amount_usd, amount_khr, totalUsd, totalKhr, type } = await request.json();
+    const { guest_name, amount_usd, amount_khr, old_amount_usd, old_amount_khr, totalUsd, totalKhr, type } = await request.json();
     console.log(`--> Received request to notify for gift: ${guest_name}, type: ${type || 'approved'}`);
 
     if (!guest_name) {
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     } else if (type === "edited") {
       message = `✏️ <b>Gift Amount Edited</b>\n\n` +
                 `<b>Guest:</b> ${guest_name}\n` +
+                `<b>Old Amount:</b> $${old_amount_usd ?? 0} / ៛${old_amount_khr ?? 0}\n` +
                 `<b>New Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
                 `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
     } else {

@@ -162,6 +162,8 @@ export default function AdminDashboard() {
               guest_name: editedGift.guest_name,
               amount_usd: parsedUsd,
               amount_khr: parsedKhr,
+              old_amount_usd: editedGift.amount_usd,
+              old_amount_khr: editedGift.amount_khr,
               totalUsd: totalUsd,
               totalKhr: totalKhr,
               type: "edited"
