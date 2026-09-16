@@ -15,7 +15,7 @@ export default function GuestForm() {
   const [name, setName] = useState("");
   const [usd, setUsd] = useState("");
   const [khr, setKhr] = useState("");
-  const [transferDate, setTransferDate] = useState("");
+  const [transferDate, setTransferDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [file, setFile] = useState<File | null>(null);
 
   // Progress Bar State
@@ -114,7 +114,7 @@ export default function GuestForm() {
       setName("");
       setUsd("");
       setKhr("");
-      setTransferDate("");
+      setTransferDate(new Date().toISOString().split('T')[0]);
       setFile(null);
 
     } catch (error: any) {
