@@ -4,34 +4,12 @@ import { supabase } from '@/lib/supabase/client';
 export async function POST(request: Request) {
   console.log("--> API /api/notify called!");
   try {
-    const { id } = await request.json();
-    console.log("--> Received request to notify for gift ID:", id);
+    const { guest_name, amount_usd, amount_khr, totalUsd } = await request.json();
+    console.log("--> Received request to notify for gift:", guest_name);
 
-    if (!id) {
-      console.log("--> Missing gift ID, returning 400");
-      return NextResponse.json({ error: 'Missing gift ID' }, { status: 400 });
-    }
-
-    // Fetch the approved gift details
-    const { data: gift, error: giftError } = await supabase
-      .from('gifts')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (giftError || !gift) {
-      return NextResponse.json({ error: 'Gift not found' }, { status: 404 });
-    }
-
-    // Calculate total collected
-    const { data: allApproved, error: allApprovedError } = await supabase
-      .from('gifts')
-      .select('amount_usd')
-      .eq('status', 'approved');
-
-    let totalUsd = 0;
-    if (!allApprovedError && allApproved) {
-        totalUsd = allApproved.reduce((acc, curr) => acc + (Number(curr.amount_usd) || 0), 0);
+    if (!guest_name) {
+      console.log("--> Missing gift details, returning 400");
+      return NextResponse.json({ error: 'Missing gift details' }, { status: 400 });
     }
 
     // Construct the Telegram message
@@ -44,8 +22,8 @@ export async function POST(request: Request) {
     }
 
     const message = `🎉 *New Gift Approved!*\n\n` +
-                    `*Guest:* ${gift.guest_name}\n` +
-                    `*Amount:* $${gift.amount_usd} / ៛${gift.amount_khr}\n\n` +
+                    `*Guest:* ${guest_name}\n` +
+                    `*Amount:* $${amount_usd} / ៛${amount_khr}\n\n` +
                     `*Total Collected:* $${totalUsd}`;
 
     // Send to Telegram

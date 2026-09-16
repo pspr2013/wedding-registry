@@ -83,21 +83,34 @@ export default function AdminDashboard() {
       
       // Trigger telegram notification on approval
       if (status === 'approved') {
-        console.log("Triggering telegram notification for id:", id);
-        alert("Approving gift and sending telegram notification!");
-        fetch('/api/notify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id })
-        }).then(res => {
-            console.log("Fetch response:", res.status);
-            if (!res.ok) alert("Failed to notify telegram. Check console.");
-        }).catch(err => {
-            console.error("Failed to notify Telegram:", err);
-            alert("Network error trying to notify telegram.");
-        });
+        const giftToApprove = gifts.find(g => g.id === id);
+        
+        const totalUsd = gifts
+           .filter(g => g.status === 'approved' || g.id === id)
+           .reduce((acc, curr) => acc + (Number(curr.amount_usd) || 0), 0);
+
+        if (giftToApprove) {
+          console.log("Triggering telegram notification for id:", id);
+          alert("Approving gift and sending telegram notification!");
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              guest_name: giftToApprove.guest_name,
+              amount_usd: giftToApprove.amount_usd,
+              amount_khr: giftToApprove.amount_khr,
+              totalUsd: totalUsd
+            })
+          }).then(res => {
+              console.log("Fetch response:", res.status);
+              if (!res.ok) alert("Failed to notify telegram. Check console.");
+          }).catch(err => {
+              console.error("Failed to notify Telegram:", err);
+              alert("Network error trying to notify telegram.");
+          });
+        }
       }
 
       await fetchGifts();
@@ -168,10 +181,20 @@ export default function AdminDashboard() {
           <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>Sign Out</Button>
           <Button onClick={() => {
             alert("Testing Telegram...");
+            
+            const totalUsd = gifts
+               .filter(g => g.status === 'approved')
+               .reduce((acc, curr) => acc + (Number(curr.amount_usd) || 0), 0);
+               
             fetch('/api/notify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id: gifts[0]?.id || "dummy-id" })
+              body: JSON.stringify({ 
+                guest_name: gifts[0]?.guest_name || "Test Guest",
+                amount_usd: gifts[0]?.amount_usd || 100,
+                amount_khr: gifts[0]?.amount_khr || 400000,
+                totalUsd: totalUsd
+              })
             }).then(res => {
               if (res.ok) alert("Telegram message sent successfully!");
               else alert("Failed to send. Error code: " + res.status);
