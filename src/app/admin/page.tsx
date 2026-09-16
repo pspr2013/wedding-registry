@@ -115,7 +115,8 @@ export default function AdminDashboard() {
               amount_usd: giftToApprove.amount_usd,
               amount_khr: giftToApprove.amount_khr,
               totalUsd: totalUsd,
-              totalKhr: totalKhr
+              totalKhr: totalKhr,
+              event_id: giftToApprove.event_id
             })
           }).then(res => {
               console.log("Fetch response:", res.status);
@@ -171,7 +172,8 @@ export default function AdminDashboard() {
               old_amount_khr: editedGift.amount_khr,
               totalUsd: totalUsd,
               totalKhr: totalKhr,
-              type: "edited"
+              type: "edited",
+              event_id: editedGift.event_id
             })
           }).catch(err => console.error("Failed to notify Telegram about edit:", err));
       }
@@ -290,7 +292,8 @@ export default function AdminDashboard() {
                 amount_usd: gifts[0]?.amount_usd ?? 100,
                 amount_khr: gifts[0]?.amount_khr ?? 400000,
                 totalUsd: totalUsd,
-                totalKhr: totalKhr
+                totalKhr: totalKhr,
+                event_id: gifts[0]?.event_id
               })
             }).then(res => {
               if (res.ok) alert("Telegram message sent successfully!");

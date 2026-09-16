@@ -22,31 +22,53 @@ export default function GuestForm() {
   const [totalCollected, setTotalCollected] = useState(0);
   const GOAL_USD = 10000;
 
-  useEffect(() => {
-    const fetchTotals = async () => {
-      const { data, error } = await supabase
-        .from("gifts")
-        .select("amount_usd, amount_khr, status")
-        .eq("status", "approved");
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [eventNotFound, setEventNotFound] = useState(false);
 
-      if (data && !error) {
+  useEffect(() => {
+    const fetchEventAndTotals = async () => {
+      // 1. Fetch Event ID
+      const { data: eventData, error: eventError } = await supabase
+        .from("events")
+        .select("id")
+        .eq("slug", slug)
+        .single();
+
+      if (eventError || !eventData) {
+        console.error("Event not found:", eventError);
+        setEventNotFound(true);
+        return;
+      }
+      setEventId(eventData.id);
+
+      // 2. Fetch Totals for THIS event
+      const { data: giftsData, error: giftsError } = await supabase
+        .from("gifts")
+        .select("amount_usd, status")
+        .eq("status", "approved")
+        .eq("event_slug", slug);
+
+      if (giftsData && !giftsError) {
         let total = 0;
-        data.forEach(gift => {
+        giftsData.forEach(gift => {
           total += (gift.amount_usd || 0);
-          // Note: KHR is ignored for the simple progress bar goal, or we could convert it.
-          // Let's just sum USD for now to keep it simple.
         });
         setTotalCollected(total);
       }
     };
-    fetchTotals();
-  }, []);
+    fetchEventAndTotals();
+  }, [slug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!usd && !khr) {
       alert("Please enter at least one amount (USD or KHR).");
+      return;
+    }
+    
+    if (!eventId) {
+      alert("Error: Event not found. Cannot submit gift.");
       return;
     }
     
@@ -84,7 +106,9 @@ export default function GuestForm() {
           amount_khr: khr ? parseFloat(khr) : 0,
           transfer_date: transferDate || null,
           slip_url,
-          status: "pending"
+          status: "pending",
+          event_id: eventId,
+          event_slug: Array.isArray(slug) ? slug[0] : slug
         });
 
       if (insertError) throw insertError;
@@ -101,7 +125,8 @@ export default function GuestForm() {
             amount_usd: usd ? parseFloat(usd) : 0,
             amount_khr: khr ? parseFloat(khr) : 0,
             transfer_date: transferDate || null,
-            type: "submitted"
+            type: "submitted",
+            event_id: eventId
           }),
         });
       } catch (notifyError) {
@@ -124,6 +149,19 @@ export default function GuestForm() {
       setLoading(false);
     }
   };
+
+  if (eventNotFound) {
+    return (
+      <div className="min-h-screen bg-rose-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg border-rose-200">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-rose-800 font-heading">Event Not Found</CardTitle>
+            <CardDescription>We couldn't find a wedding event for "{slug}".</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-rose-50 flex items-center justify-center p-4">

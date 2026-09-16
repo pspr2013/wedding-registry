@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase/client';
 export async function POST(request: Request) {
   console.log("--> API /api/notify called!");
   try {
-    const { guest_name, amount_usd, amount_khr, old_amount_usd, old_amount_khr, totalUsd, totalKhr, type, transfer_date } = await request.json();
+    const { guest_name, amount_usd, amount_khr, old_amount_usd, old_amount_khr, totalUsd, totalKhr, type, transfer_date, event_id } = await request.json();
     console.log(`--> Received request to notify for gift: ${guest_name}, type: ${type || 'approved'}`);
 
     if (!guest_name) {
@@ -13,8 +13,23 @@ export async function POST(request: Request) {
     }
 
     // Construct the Telegram message
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    let botToken = process.env.TELEGRAM_BOT_TOKEN;
+    let chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (event_id) {
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select('telegram_chat_id, telegram_bot_token')
+        .eq('id', event_id)
+        .single();
+        
+      if (!eventError && eventData) {
+        if (eventData.telegram_chat_id) chatId = eventData.telegram_chat_id;
+        if (eventData.telegram_bot_token) botToken = eventData.telegram_bot_token;
+      } else {
+        console.warn("Could not fetch event telegram details:", eventError);
+      }
+    }
 
     if (!botToken || !chatId) {
       console.warn("Telegram credentials not configured.");

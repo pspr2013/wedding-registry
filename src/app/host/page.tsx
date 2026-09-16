@@ -80,13 +80,16 @@ export default function HostDashboard() {
 
       if (error) throw error;
       
-      // Update local cache
+      // Update local cache strictly to match server
+      await db.gifts.clear();
       if (data && data.length > 0) {
-        await db.gifts.clear();
         await db.gifts.bulkPut(data as Gift[]);
       }
     } catch (error) {
       console.error("Error fetching gifts:", error);
+      // If there's an error (like a permissions error), we should also clear the cache 
+      // so we don't show stale data when we shouldn't have access.
+      await db.gifts.clear();
     } finally {
       setLoading(false);
     }
