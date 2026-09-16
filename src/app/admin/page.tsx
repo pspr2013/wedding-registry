@@ -16,6 +16,7 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUsd, setEditUsd] = useState("");
   const [editKhr, setEditKhr] = useState("");
+  const [editTransferDate, setEditTransferDate] = useState("");
   
   // Auth state
   const [session, setSession] = useState<any>(null);
@@ -138,7 +139,8 @@ export default function AdminDashboard() {
         .from("gifts")
         .update({ 
           amount_usd: parsedUsd,
-          amount_khr: parsedKhr
+          amount_khr: parsedKhr,
+          transfer_date: editTransferDate || null
         })
         .eq("id", id);
         
@@ -188,7 +190,7 @@ export default function AdminDashboard() {
   };
 
   const exportCSV = () => {
-    const headers = ["Guest Name", "USD Amount", "KHR Amount", "Status", "Date Submitted"];
+    const headers = ["Guest Name", "USD Amount", "KHR Amount", "Status", "Date Submitted", "Transfer Date"];
     const csvContent = [
       headers.join(","),
       ...gifts.map(g => [
@@ -196,7 +198,8 @@ export default function AdminDashboard() {
         g.amount_usd || 0,
         g.amount_khr || 0,
         g.status,
-        `"${new Date(g.created_at).toLocaleString()}"`
+        `"${new Date(g.created_at).toLocaleString()}"`,
+        `"${g.transfer_date || ""}"`
       ].join(","))
     ].join("\n");
 
@@ -319,11 +322,16 @@ export default function AdminDashboard() {
                       <Label>KHR Amount</Label>
                       <Input type="number" value={editKhr} onChange={(e) => setEditKhr(e.target.value)} />
                     </div>
+                    <div className="space-y-1">
+                      <Label>Transfer Date</Label>
+                      <Input type="date" value={editTransferDate} onChange={(e) => setEditTransferDate(e.target.value)} />
+                    </div>
                   </>
                 ) : (
                   <>
                     <div><strong>USD:</strong> ${gift.amount_usd}</div>
                     <div><strong>KHR:</strong> ៛{gift.amount_khr}</div>
+                    {gift.transfer_date && <div><strong>Date:</strong> {gift.transfer_date}</div>}
                   </>
                 )}
                 <div>
@@ -348,6 +356,7 @@ export default function AdminDashboard() {
                         setEditingId(gift.id);
                         setEditUsd(gift.amount_usd?.toString() || "0");
                         setEditKhr(gift.amount_khr?.toString() || "0");
+                        setEditTransferDate(gift.transfer_date || "");
                       }}>Edit</Button>
                       {gift.status === 'pending' && (
                         <>

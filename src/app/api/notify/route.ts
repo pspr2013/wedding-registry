@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase/client';
 export async function POST(request: Request) {
   console.log("--> API /api/notify called!");
   try {
-    const { guest_name, amount_usd, amount_khr, old_amount_usd, old_amount_khr, totalUsd, totalKhr, type } = await request.json();
+    const { guest_name, amount_usd, amount_khr, old_amount_usd, old_amount_khr, totalUsd, totalKhr, type, transfer_date } = await request.json();
     console.log(`--> Received request to notify for gift: ${guest_name}, type: ${type || 'approved'}`);
 
     if (!guest_name) {
@@ -22,10 +22,12 @@ export async function POST(request: Request) {
     }
 
     let message = "";
+    const dateStr = transfer_date ? `\n📅 <b>Transfer Date:</b> ${transfer_date}` : '';
+
     if (type === "submitted") {
-      message = `🛎 <b>New Gift Submitted (Pending Approval)</b>\n\n` +
-                `<b>Guest:</b> ${guest_name}\n` +
-                `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}`;
+      message = `🎉 <b>New Gift Submitted!</b> 🎉\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${amount_usd ?? 0}\n៛ <b>KHR:</b> ${amount_khr ?? 0}៛${dateStr}\n\n⏳ <i>Status: Pending Approval</i>`;
+    } else if (type === "approved") {
+      message = `✅ <b>Gift Approved!</b> ✅\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${amount_usd ?? 0}\n៛ <b>KHR:</b> ${amount_khr ?? 0}៛\n\n💖 <i>Thank you for your blessing!</i>`;
     } else if (type === "edited") {
       message = `✏️ <b>Gift Amount Edited</b>\n\n` +
                 `<b>Guest:</b> ${guest_name}\n` +

@@ -15,6 +15,7 @@ export default function GuestForm() {
   const [name, setName] = useState("");
   const [usd, setUsd] = useState("");
   const [khr, setKhr] = useState("");
+  const [transferDate, setTransferDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
   // Progress Bar State
@@ -81,6 +82,7 @@ export default function GuestForm() {
           guest_name: name,
           amount_usd: usd ? parseFloat(usd) : 0,
           amount_khr: khr ? parseFloat(khr) : 0,
+          transfer_date: transferDate || null,
           slip_url,
           status: "pending"
         });
@@ -98,6 +100,7 @@ export default function GuestForm() {
             guest_name: name,
             amount_usd: usd ? parseFloat(usd) : 0,
             amount_khr: khr ? parseFloat(khr) : 0,
+            transfer_date: transferDate || null,
             type: "submitted"
           }),
         });
@@ -111,6 +114,7 @@ export default function GuestForm() {
       setName("");
       setUsd("");
       setKhr("");
+      setTransferDate("");
       setFile(null);
 
     } catch (error: any) {
@@ -179,6 +183,15 @@ export default function GuestForm() {
                 value={khr}
                 onChange={(e) => setKhr(e.target.value)}
                 placeholder="៛ 0" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="transferDate">កាលបរិច្ឆេទផ្ទេរប្រាក់ (Transfer Date)</Label>
+              <Input 
+                id="transferDate" 
+                type="date" 
+                value={transferDate}
+                onChange={(e) => setTransferDate(e.target.value)}
               />
             </div>
             <div className="space-y-2">
