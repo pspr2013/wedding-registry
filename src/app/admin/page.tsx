@@ -203,7 +203,7 @@ export default function AdminDashboard() {
       ].join(","))
     ].join("\n");
 
-    const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+    const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent("\uFEFF" + csvContent);
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "wedding_gifts_export.csv");
