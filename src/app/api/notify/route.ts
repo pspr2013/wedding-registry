@@ -26,6 +26,11 @@ export async function POST(request: Request) {
       message = `🛎 <b>New Gift Submitted (Pending Approval)</b>\n\n` +
                 `<b>Guest:</b> ${guest_name}\n` +
                 `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}`;
+    } else if (type === "edited") {
+      message = `✏️ <b>Gift Amount Edited</b>\n\n` +
+                `<b>Guest:</b> ${guest_name}\n` +
+                `<b>New Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
+                `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
     } else {
       message = `🎉 <b>New Gift Approved!</b>\n\n` +
                 `<b>Guest:</b> ${guest_name}\n` +

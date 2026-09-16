@@ -131,16 +131,44 @@ export default function AdminDashboard() {
 
   const handleSaveEdit = async (id: string) => {
     try {
+      const parsedUsd = parseFloat(editUsd) || 0;
+      const parsedKhr = parseFloat(editKhr) || 0;
+      
       const { error } = await supabase
         .from("gifts")
         .update({ 
-          amount_usd: parseFloat(editUsd) || 0,
-          amount_khr: parseFloat(editKhr) || 0
+          amount_usd: parsedUsd,
+          amount_khr: parsedKhr
         })
         .eq("id", id);
+        
       if (error) throw error;
+      
+      const editedGift = gifts.find(g => g.id === id);
       setEditingId(null);
       await fetchGifts();
+      
+      if (editedGift && editedGift.status === 'approved') {
+         // Calculate new totals with the updated amounts (simulating what fetchGifts just got)
+         const totalUsd = gifts.filter(g => g.status === 'approved').reduce((acc, curr) => acc + (curr.id === id ? parsedUsd : (Number(curr.amount_usd) || 0)), 0);
+         const totalKhr = gifts.filter(g => g.status === 'approved').reduce((acc, curr) => acc + (curr.id === id ? parsedKhr : (Number(curr.amount_khr) || 0)), 0);
+
+         fetch('/api/notify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              guest_name: editedGift.guest_name,
+              amount_usd: parsedUsd,
+              amount_khr: parsedKhr,
+              totalUsd: totalUsd,
+              totalKhr: totalKhr,
+              type: "edited"
+            })
+          }).catch(err => console.error("Failed to notify Telegram about edit:", err));
+      }
+      
     } catch (error) {
       console.error("Error updating gift:", error);
       alert("Failed to update gift");
