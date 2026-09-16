@@ -25,20 +25,20 @@ export async function POST(request: Request) {
     const dateStr = transfer_date ? `\n📅 <b>Transfer Date:</b> ${transfer_date}` : '';
 
     if (type === "submitted") {
-      message = `🎉 <b>New Gift Submitted!</b> 🎉\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${amount_usd ?? 0}\n៛ <b>KHR:</b> ${amount_khr ?? 0}៛${dateStr}\n\n⏳ <i>Status: Pending Approval</i>`;
+      message = `🎉 <b>New Gift Submitted!</b> 🎉\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${(amount_usd ?? 0).toLocaleString()}\n៛ <b>KHR:</b> ${(amount_khr ?? 0).toLocaleString()}៛${dateStr}\n\n⏳ <i>Status: Pending Approval</i>`;
     } else if (type === "approved") {
-      message = `✅ <b>Gift Approved!</b> ✅\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${amount_usd ?? 0}\n៛ <b>KHR:</b> ${amount_khr ?? 0}៛\n\n💖 <i>Thank you for your blessing!</i>`;
+      message = `✅ <b>Gift Approved!</b> ✅\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${(amount_usd ?? 0).toLocaleString()}\n៛ <b>KHR:</b> ${(amount_khr ?? 0).toLocaleString()}៛\n\n💖 <i>Thank you for your blessing!</i>`;
     } else if (type === "edited") {
       message = `✏️ <b>Gift Amount Edited</b>\n\n` +
                 `<b>Guest:</b> ${guest_name}\n` +
-                `<b>Old Amount:</b> $${old_amount_usd ?? 0} / ៛${old_amount_khr ?? 0}\n` +
-                `<b>New Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
-                `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
+                `<b>Old Amount:</b> $${(old_amount_usd ?? 0).toLocaleString()} / ៛${(old_amount_khr ?? 0).toLocaleString()}\n` +
+                `<b>New Amount:</b> $${(amount_usd ?? 0).toLocaleString()} / ៛${(amount_khr ?? 0).toLocaleString()}\n\n` +
+                `<b>Total Collected:</b> $${(totalUsd ?? 0).toLocaleString()} / ៛${(totalKhr ?? 0).toLocaleString()}`;
     } else {
       message = `🎉 <b>New Gift Approved!</b>\n\n` +
                 `<b>Guest:</b> ${guest_name}\n` +
-                `<b>Amount:</b> $${amount_usd ?? 0} / ៛${amount_khr ?? 0}\n\n` +
-                `<b>Total Collected:</b> $${totalUsd ?? 0} / ៛${totalKhr ?? 0}`;
+                `<b>Amount:</b> $${(amount_usd ?? 0).toLocaleString()} / ៛${(amount_khr ?? 0).toLocaleString()}\n\n` +
+                `<b>Total Collected:</b> $${(totalUsd ?? 0).toLocaleString()} / ៛${(totalKhr ?? 0).toLocaleString()}`;
     }
 
     // Send to all Telegram chat IDs (comma separated)
