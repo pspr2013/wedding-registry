@@ -34,7 +34,7 @@ export default function AdminDashboard() {
     const userEmail = currentSession?.user?.email || "";
     const userRole = currentSession?.user?.user_metadata?.role;
     
-    if (userEmail.toLowerCase().includes("admin") || userRole === 'admin') {
+    if (userEmail === "admin@wedding.com" || userRole === 'admin') {
       setSession(currentSession);
       setAuthError("");
       fetchGifts();
@@ -96,12 +96,19 @@ export default function AdminDashboard() {
   const fetchGifts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("gifts")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const response = await fetch('/api/gifts', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || 'Failed to fetch gifts');
+      
+      const data = json.gifts;
       setGifts(data || []);
       
       // Cache approved gifts in Dexie
@@ -120,11 +127,17 @@ export default function AdminDashboard() {
 
   const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
     try {
-      const { error } = await supabase
-        .from("gifts")
-        .update({ status })
-        .eq("id", id);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/gifts', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ id, status })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || 'Failed to update gift status');
       
       // Trigger telegram notification on approval
       if (status === 'approved') {
@@ -175,16 +188,23 @@ export default function AdminDashboard() {
       const parsedUsd = parseFloat(editUsd) || 0;
       const parsedKhr = parseFloat(editKhr) || 0;
       
-      const { error } = await supabase
-        .from("gifts")
-        .update({ 
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/gifts', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          id,
           amount_usd: parsedUsd,
           amount_khr: parsedKhr,
           transfer_date: editTransferDate || null
         })
-        .eq("id", id);
-        
-      if (error) throw error;
+      });
+      
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || 'Failed to edit gift');
       
       const editedGift = gifts.find(g => g.id === id);
       setEditingId(null);
