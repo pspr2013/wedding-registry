@@ -466,7 +466,7 @@ export default function AdminDashboard() {
                 </td>
                 <td className="p-4 text-gray-500">
                   {editingId === gift.id ? (
-                    <Input type="date" value={editTransferDate} onChange={(e) => setEditTransferDate(e.target.value)} className="w-36 h-8" />
+                    <Input type="datetime-local" step="1" value={editTransferDate} onChange={(e) => setEditTransferDate(e.target.value)} className="w-50 h-8" />
                   ) : (
                     <div className="flex flex-col">
                       <span>{new Date(gift.created_at).toLocaleString()}</span>

@@ -15,7 +15,12 @@ export default function GuestForm() {
   const [name, setName] = useState("");
   const [usd, setUsd] = useState("");
   const [khr, setKhr] = useState("");
-  const [transferDate, setTransferDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [transferDate, setTransferDate] = useState("");
+
+  useEffect(() => {
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    setTransferDate(new Date(Date.now() - tzoffset).toISOString().slice(0, 19));
+  }, []);
   const [file, setFile] = useState<File | null>(null);
   
   // Host Selection
@@ -294,9 +299,11 @@ export default function GuestForm() {
               <Label htmlFor="transferDate">កាលបរិច្ឆេទផ្ទេរប្រាក់ (Transfer Date)</Label>
               <Input 
                 id="transferDate" 
-                type="date" 
+                type="datetime-local"
+                step="1"
                 value={transferDate}
-                onChange={(e) => setTransferDate(e.target.value)}
+                readOnly
+                className="bg-gray-100"
               />
             </div>
             <div className="space-y-2">
