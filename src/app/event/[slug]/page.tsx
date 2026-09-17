@@ -180,7 +180,8 @@ export default function GuestForm() {
       setName("");
       setUsd("");
       setKhr("");
-      setTransferDate(new Date().toISOString().split('T')[0]);
+      const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+      setTransferDate(new Date(Date.now() - tzoffset).toISOString().slice(0, 19));
       setFile(null);
 
     } catch (error: any) {
