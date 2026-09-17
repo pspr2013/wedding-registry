@@ -37,7 +37,6 @@ export default function AdminDashboard() {
       setAuthError("");
       fetchGifts();
     } else {
-      await supabase.auth.signOut();
       setSession(null);
       setAuthError("Access Denied: You must use an Admin account to access this dashboard. You are currently logged in as " + userEmail);
       setLoading(false);
@@ -61,9 +60,7 @@ export default function AdminDashboard() {
         verifyAdmin(session);
       } else {
         setSession(null);
-        // Only clear authError if they are actually navigating away or it was empty.
-        // But since signOut() triggers this, we don't want to clear the Access Denied message!
-        // We will leave authError alone so they can see why they were signed out.
+        setAuthError("");
       }
     });
 
