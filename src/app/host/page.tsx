@@ -73,9 +73,20 @@ export default function HostDashboard() {
     
     setLoading(true);
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
+      // Check if the user is an admin; admins might want to see all or we just restrict them too?
+      // Since this is the /host route, let's strictly filter by the logged-in user's email.
       const { data, error } = await supabase
         .from("gifts")
         .select("*")
+        .eq("host_email", session.user.email)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

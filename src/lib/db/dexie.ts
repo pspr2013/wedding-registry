@@ -1,6 +1,9 @@
 import Dexie, { type EntityTable } from 'dexie';
 
 export interface Gift {
+  event_id: string;
+  event_slug?: string;
+  host_email?: string;
   id: string;
   guest_name: string;
   amount_usd: number;

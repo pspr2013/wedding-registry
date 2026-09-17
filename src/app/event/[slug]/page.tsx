@@ -17,6 +17,10 @@ export default function GuestForm() {
   const [khr, setKhr] = useState("");
   const [transferDate, setTransferDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [file, setFile] = useState<File | null>(null);
+  
+  // Host Selection
+  const [hosts, setHosts] = useState<{email: string}[]>([]);
+  const [selectedHost, setSelectedHost] = useState("");
 
   // Progress Bar State
   const [totalCollected, setTotalCollected] = useState(0);
@@ -55,6 +59,20 @@ export default function GuestForm() {
         });
         setTotalCollected(total);
       }
+      
+      // 3. Fetch available hosts
+      try {
+        const res = await fetch('/api/hosts');
+        if (res.ok) {
+          const data = await res.json();
+          setHosts(data.hosts || []);
+          if (data.hosts && data.hosts.length > 0) {
+            setSelectedHost(data.hosts[0].email);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch hosts:", err);
+      }
     };
     fetchEventAndTotals();
   }, [slug]);
@@ -69,6 +87,11 @@ export default function GuestForm() {
     
     if (!eventId) {
       alert("Error: Event not found. Cannot submit gift.");
+      return;
+    }
+    
+    if (!selectedHost) {
+      alert("Please select a host.");
       return;
     }
     
@@ -108,7 +131,8 @@ export default function GuestForm() {
           slip_url,
           status: "pending",
           event_id: eventId,
-          event_slug: Array.isArray(slug) ? slug[0] : slug
+          event_slug: Array.isArray(slug) ? slug[0] : slug,
+          host_email: selectedHost
         });
 
       if (insertError) throw insertError;
@@ -189,6 +213,23 @@ export default function GuestForm() {
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
+            {hosts.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="host">អ្នកអញ្ជើញ (Which host invited you?)</Label>
+                <select 
+                  id="host"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  value={selectedHost}
+                  onChange={(e) => setSelectedHost(e.target.value)}
+                  required
+                >
+                  {hosts.map(h => (
+                    <option key={h.email} value={h.email}>{h.email}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="name">ឈ្មោះភ្ញៀវ (Guest Name) *</Label>
               <Input 

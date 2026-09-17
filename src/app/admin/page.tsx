@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [hostFilter, setHostFilter] = useState("all");
   
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -230,11 +231,12 @@ export default function AdminDashboard() {
   };
 
   const exportCSV = () => {
-    const headers = ["Guest Name", "USD Amount", "KHR Amount", "Status", "Date Submitted", "Transfer Date"];
+    const headers = ["Guest Name", "Host Email", "USD Amount", "KHR Amount", "Status", "Date Submitted", "Transfer Date"];
     const csvContent = [
       headers.join(","),
       ...gifts.map(g => [
         `"${(g.guest_name || "").replace(/"/g, '""')}"`,
+        `"${(g.host_email || "").replace(/"/g, '""')}"`,
         g.amount_usd || 0,
         g.amount_khr || 0,
         g.status,
@@ -316,8 +318,11 @@ export default function AdminDashboard() {
   const filteredGifts = gifts.filter((gift) => {
     const matchesSearch = gift.guest_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || gift.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesHost = hostFilter === "all" || gift.host_email === hostFilter;
+    return matchesSearch && matchesStatus && matchesHost;
   });
+
+  const uniqueHosts = Array.from(new Set(gifts.map(g => g.host_email).filter(Boolean)));
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6">
@@ -386,6 +391,16 @@ export default function AdminDashboard() {
           <option value="approved">អនុម័ត (Approved)</option>
           <option value="rejected">បដិសេធ (Rejected)</option>
         </select>
+        <select
+          className="flex h-10 w-full sm:w-48 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          value={hostFilter}
+          onChange={(e) => setHostFilter(e.target.value)}
+        >
+          <option value="all">គ្រប់អ្នកអញ្ជើញ (All Hosts)</option>
+          {uniqueHosts.map(host => (
+            <option key={host as string} value={host as string}>{host as string}</option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
@@ -393,6 +408,7 @@ export default function AdminDashboard() {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="p-4 font-medium text-gray-700">Guest Name</th>
+              <th className="p-4 font-medium text-gray-700">Host</th>
               <th className="p-4 font-medium text-gray-700">USD</th>
               <th className="p-4 font-medium text-gray-700">KHR</th>
               <th className="p-4 font-medium text-gray-700">Status</th>
@@ -404,6 +420,7 @@ export default function AdminDashboard() {
             {filteredGifts.map(gift => (
               <tr key={gift.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
                 <td className="p-4 font-medium text-gray-900">{gift.guest_name}</td>
+                <td className="p-4 text-gray-600 text-xs">{gift.host_email || '—'}</td>
                 <td className="p-4">
                   {editingId === gift.id ? (
                     <Input type="number" value={editUsd} onChange={(e) => setEditUsd(e.target.value)} className="w-24 h-8" />
@@ -471,7 +488,7 @@ export default function AdminDashboard() {
             ))}
             {filteredGifts.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-gray-500">
+                <td colSpan={7} className="p-8 text-center text-gray-500">
                   មិនទាន់មានទិន្នន័យ (No data found)
                 </td>
               </tr>
