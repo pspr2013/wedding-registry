@@ -26,19 +26,45 @@ export default function AdminDashboard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  const verifyAdmin = async (currentSession: any) => {
+    setLoading(true);
+    const userEmail = currentSession?.user?.email || "";
+    
+    if (userEmail.toLowerCase().includes("admin")) {
+      setSession(currentSession);
+      setAuthError("");
+      fetchGifts();
+    } else {
+      await supabase.auth.signOut();
+      setSession(null);
+      setAuthError("Access Denied: You must use an Admin account to access this dashboard. You are currently logged in as " + userEmail);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchGifts();
-      else setLoading(false);
+      if (session) {
+        verifyAdmin(session);
+      } else {
+        setSession(null);
+        setLoading(false);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchGifts();
+      if (session) {
+        verifyAdmin(session);
+      } else {
+        setSession(null);
+        // Only clear authError if they are actually navigating away or it was empty.
+        // But since signOut() triggers this, we don't want to clear the Access Denied message!
+        // We will leave authError alone so they can see why they were signed out.
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -46,6 +72,12 @@ export default function AdminDashboard() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email.toLowerCase().includes("admin")) {
+      alert("Login Error: You must use an Admin account to log in to this dashboard.");
+      return;
+    }
+
     setAuthLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -218,6 +250,24 @@ export default function AdminDashboard() {
   };
 
   if (!session) {
+    if (authError) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md shadow-lg border-red-200">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-red-600">Access Denied</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-center">
+              <p className="text-slate-700">{authError}</p>
+              <Button onClick={() => supabase.auth.signOut()} variant="outline" className="w-full">
+                Sign Out
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-lg">
