@@ -112,7 +112,7 @@ export default function AdminDashboard() {
       setGifts(data || []);
       
       // Cache approved gifts in Dexie
-      const approvedGifts = (data || []).filter(g => g.status === 'approved') as Gift[];
+      const approvedGifts = (data || []).filter((g: any) => g.status === 'approved') as Gift[];
       await db.gifts.clear(); // simple full refresh for demo
       if (approvedGifts.length > 0) {
         await db.gifts.bulkPut(approvedGifts);
