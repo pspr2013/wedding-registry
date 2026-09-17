@@ -22,6 +22,14 @@ export default function GuestForm() {
   const [hosts, setHosts] = useState<{email: string}[]>([]);
   const [selectedHost, setSelectedHost] = useState("");
 
+  const formatHostName = (email: string) => {
+    let name = email.split('@')[0];
+    if (name.startsWith('admin_')) {
+      name = name.replace('admin_', '');
+    }
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  };
+
   // Progress Bar State
   const [totalCollected, setTotalCollected] = useState(0);
   const GOAL_USD = 10000;
@@ -224,7 +232,7 @@ export default function GuestForm() {
                   required
                 >
                   {hosts.map(h => (
-                    <option key={h.email} value={h.email}>{h.email}</option>
+                    <option key={h.email} value={h.email}>{formatHostName(h.email)}</option>
                   ))}
                 </select>
               </div>
