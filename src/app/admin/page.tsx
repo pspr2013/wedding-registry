@@ -261,7 +261,7 @@ export default function AdminDashboard() {
         g.amount_khr || 0,
         g.status,
         `"${new Date(g.created_at).toLocaleString()}"`,
-        `"${g.transfer_date || ""}"`
+        `"${g.transfer_date ? new Date(g.transfer_date).toLocaleString() : ""}"`
       ].join(","))
     ].join("\n");
 
