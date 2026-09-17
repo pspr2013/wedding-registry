@@ -19,7 +19,7 @@ export default function GuestForm() {
   const [file, setFile] = useState<File | null>(null);
   
   // Host Selection
-  const [hosts, setHosts] = useState<{email: string}[]>([]);
+  const [hosts, setHosts] = useState<{email: string, name?: string}[]>([]);
   const [selectedHost, setSelectedHost] = useState("");
 
   const formatHostName = (email: string) => {
@@ -250,7 +250,7 @@ export default function GuestForm() {
                   required
                 >
                   {hosts.map(h => (
-                    <option key={h.email} value={h.email}>{formatHostName(h.email)}</option>
+                    <option key={h.email} value={h.email}>{h.name || formatHostName(h.email)}</option>
                   ))}
                 </select>
               </div>

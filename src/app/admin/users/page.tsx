@@ -18,12 +18,14 @@ export default function UserManagement() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("host"); // 'host' or 'admin'
+  const [newName, setNewName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   // Edit user state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPassword, setEditPassword] = useState("");
   const [editRole, setEditRole] = useState("");
+  const [editName, setEditName] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   const verifySuperAdmin = async (currentSession: any) => {
@@ -95,7 +97,7 @@ export default function UserManagement() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ email: newEmail, password: newPassword, role: newRole })
+        body: JSON.stringify({ email: newEmail, password: newPassword, role: newRole, name: newName })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -104,6 +106,7 @@ export default function UserManagement() {
       setNewEmail("");
       setNewPassword("");
       setNewRole("host");
+      setNewName("");
       fetchUsers(session.access_token);
     } catch (err: any) {
       alert("Failed to create user: " + err.message);
@@ -121,7 +124,7 @@ export default function UserManagement() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ id, password: editPassword, role: editRole })
+        body: JSON.stringify({ id, password: editPassword, role: editRole, name: editName })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -219,11 +222,15 @@ export default function UserManagement() {
           <form onSubmit={handleCreateUser} className="flex gap-4 items-end flex-wrap">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input required type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="user@wedding.com" className="w-64" />
+              <Input required type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="user@wedding.com" className="w-56" />
+            </div>
+            <div className="space-y-2">
+              <Label>Name (Optional)</Label>
+              <Input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Display Name" className="w-48" />
             </div>
             <div className="space-y-2">
               <Label>Password</Label>
-              <Input required type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-64" />
+              <Input required type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-48" />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
@@ -247,6 +254,7 @@ export default function UserManagement() {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="p-4 font-medium text-gray-700">Email</th>
+              <th className="p-4 font-medium text-gray-700">Name</th>
               <th className="p-4 font-medium text-gray-700">Role</th>
               <th className="p-4 font-medium text-gray-700">Created At</th>
               <th className="p-4 font-medium text-gray-700 text-right">Actions</th>
@@ -256,6 +264,19 @@ export default function UserManagement() {
             {users.map(user => (
               <tr key={user.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
                 <td className="p-4 font-medium text-gray-900">{user.email}</td>
+                <td className="p-4">
+                  {editingId === user.id ? (
+                    <Input 
+                      type="text" 
+                      placeholder="Name" 
+                      value={editName} 
+                      onChange={e => setEditName(e.target.value)} 
+                      className="h-8 w-32" 
+                    />
+                  ) : (
+                    <span className="text-gray-600">{user.user_metadata?.name || '-'}</span>
+                  )}
+                </td>
                 <td className="p-4">
                   {editingId === user.id ? (
                     <select 
@@ -292,6 +313,7 @@ export default function UserManagement() {
                         <Button size="sm" variant="secondary" onClick={() => {
                           setEditingId(user.id);
                           setEditRole(user.user_metadata?.role || (user.email.includes("admin") ? "admin" : "host"));
+                          setEditName(user.user_metadata?.name || "");
                           setEditPassword("");
                         }}>Edit</Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(user.id)}>Delete</Button>

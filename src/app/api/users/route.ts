@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authCheck.error }, { status: authCheck.status });
     }
 
-    const { email, password, role } = await request.json();
+    const { email, password, role, name } = await request.json();
 
     if (!email || !password || !role) {
       return NextResponse.json({ error: 'Email, password, and role are required' }, { status: 400 });
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { role }
+      user_metadata: { role, name: name || '' }
     });
 
     if (error) {
@@ -82,7 +82,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: authCheck.error }, { status: authCheck.status });
     }
 
-    const { id, password, role } = await request.json();
+    const { id, password, role, name } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -90,7 +90,28 @@ export async function PUT(request: Request) {
 
     const updateData: any = {};
     if (password) updateData.password = password;
-    if (role) updateData.user_metadata = { role };
+    
+    // We want to preserve existing user_metadata if possible, but the API expects the full object for updates
+    // if we just pass a new one. We'll fetch the user first.
+    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(id);
+    const existingMetadata = existingUser?.user?.user_metadata || {};
+    
+    let newMetadata = { ...existingMetadata };
+    let metadataChanged = false;
+
+    if (role !== undefined && role !== existingMetadata.role) {
+      newMetadata.role = role;
+      metadataChanged = true;
+    }
+    
+    if (name !== undefined && name !== existingMetadata.name) {
+      newMetadata.name = name;
+      metadataChanged = true;
+    }
+
+    if (metadataChanged) {
+      updateData.user_metadata = newMetadata;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });

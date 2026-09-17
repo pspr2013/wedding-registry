@@ -12,7 +12,7 @@ export async function GET() {
     // Filter users who are hosts (either by metadata role or email)
     const hosts = users.users
       .filter(user => user.user_metadata?.role === 'host' || (!user.user_metadata?.role && user.email?.includes('host')))
-      .map(user => ({ email: user.email }));
+      .map(user => ({ email: user.email, name: user.user_metadata?.name || '' }));
 
     return NextResponse.json({ hosts });
   } catch (error: any) {
