@@ -36,6 +36,7 @@ export default function GuestForm() {
 
   const [eventId, setEventId] = useState<string | null>(null);
   const [eventNotFound, setEventNotFound] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     const fetchEventAndTotals = async () => {
@@ -49,6 +50,7 @@ export default function GuestForm() {
       if (eventError || !eventData) {
         console.error("Event not found:", eventError);
         setEventNotFound(true);
+        setIsInitializing(false);
         return;
       }
       setEventId(eventData.id);
@@ -81,6 +83,8 @@ export default function GuestForm() {
       } catch (err) {
         console.error("Failed to fetch hosts:", err);
       }
+
+      setIsInitializing(false);
     };
     fetchEventAndTotals();
   }, [slug]);
@@ -181,6 +185,20 @@ export default function GuestForm() {
       setLoading(false);
     }
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-rose-50 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center text-rose-500">
+           <svg className="animate-spin h-8 w-8 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+           </svg>
+           <p className="font-medium">កំពុងដំណើរការ (Loading)...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (eventNotFound) {
     return (
