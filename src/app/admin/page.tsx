@@ -31,8 +31,9 @@ export default function AdminDashboard() {
   const verifyAdmin = async (currentSession: any) => {
     setLoading(true);
     const userEmail = currentSession?.user?.email || "";
+    const userRole = currentSession?.user?.user_metadata?.role;
     
-    if (userEmail.toLowerCase().includes("admin")) {
+    if (userEmail.toLowerCase().includes("admin") || userRole === 'admin') {
       setSession(currentSession);
       setAuthError("");
       fetchGifts();
@@ -70,19 +71,24 @@ export default function AdminDashboard() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.toLowerCase().includes("admin")) {
-      alert("Login Error: You must use an Admin account to log in to this dashboard.");
-      return;
-    }
-
     setAuthLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     setAuthLoading(false);
+    
     if (error) {
       alert("Login Error: " + error.message);
+      return;
+    }
+    
+    const userEmail = data?.user?.email || "";
+    const userRole = data?.user?.user_metadata?.role;
+    
+    if (!userEmail.toLowerCase().includes("admin") && userRole !== 'admin') {
+      alert("Login Error: You must use an Admin account to log in to this dashboard.");
+      await supabase.auth.signOut();
     }
   };
 
@@ -319,6 +325,11 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-heading font-bold">Admin Dashboard</h1>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">{session.user.email}</span>
+          {session.user.email === "admin@wedding.com" && (
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/admin/users'}>
+              Manage Users
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>Sign Out</Button>
           <Button onClick={() => {
             alert("Testing Telegram...");
