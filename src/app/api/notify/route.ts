@@ -36,8 +36,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Telegram credentials not configured' }, { status: 500 });
     }
 
+    let formattedTransferDate = transfer_date;
+    if (transfer_date && transfer_date.includes('T')) {
+      const dateObj = new Date(transfer_date + 'Z'); // Treat as UTC so we can format it predictably
+      if (!isNaN(dateObj.getTime())) {
+        formattedTransferDate = dateObj.toLocaleString('en-US', { timeZone: 'UTC' });
+      }
+    }
+
     let message = "";
-    const dateStr = transfer_date ? `\n📅 <b>Transfer Date:</b> ${transfer_date}` : '';
+    const dateStr = transfer_date ? `\n📅 <b>Transfer Date:</b> ${formattedTransferDate}` : '';
 
     if (type === "submitted") {
       message = `🎉 <b>New Gift Submitted!</b> 🎉\n\n👤 <b>From:</b> ${guest_name}\n💵 <b>USD:</b> $${(amount_usd ?? 0).toLocaleString()}\n៛ <b>KHR:</b> ${(amount_khr ?? 0).toLocaleString()}៛${dateStr}\n\n⏳ <i>Status: Pending Approval</i>`;
